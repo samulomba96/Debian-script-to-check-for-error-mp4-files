@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
 # controlla_mp4_video.sh
 # ISPEZIONE PACCHETTI: Calcola l'offset iniziale e finale reale tra Audio e Video
-#
-# Requisiti: ffmpeg/ffprobe (sudo apt install ffmpeg), bash >= 4
-#
-# Uso:
-#   ./controlla_mp4_video.sh [-d CARTELLA] [-s SOGLIA_INIZIO] [-e SOGLIA_FINE] [-p N_PACCHETTI] [-k SEC_DA_EOF]
-#
-# Esempio:
-#   ./controlla_mp4_video.sh -d /mnt/video -s 0.15 -e 0.40
 
 set -u
 
-# Forza il locale C per tutti i calcoli numerici (awk, printf, sort):
-# evita errori quando il sistema usa la virgola come separatore decimale.
 export LC_ALL=C
 
 DIR="."
@@ -53,10 +43,6 @@ fi
 
 ABS_DIR="$(cd "$DIR" && pwd)"
 
-# Determina dove salvare il report:
-# - se specificato con -o, usa quella cartella
-# - altrimenti prova a scrivere nella cartella scansionata
-# - se non e' scrivibile (es. mount di sola lettura per l'utente), usa $HOME
 if [ -n "$OUT_DIR" ]; then
     if [ ! -d "$OUT_DIR" ] || [ ! -w "$OUT_DIR" ]; then
         echo "Errore: cartella di output non valida o non scrivibile: $OUT_DIR" >&2
@@ -72,7 +58,6 @@ fi
 
 echo "file;stato;dettagli" > "$OUT_CSV"
 
-# --- Funzione: scrive una riga CSV con escaping minimo (quoting se contiene ; o ") ---
 csv_escape() {
     local field="$1"
     if [[ "$field" == *";"* || "$field" == *'"'* ]]; then
@@ -92,7 +77,6 @@ write_csv_line() {
     printf '%s;%s;%s\n' "$f1" "$f2" "$f3" >> "$OUT_CSV"
 }
 
-# --- Funzione: stream presente? ---
 stream_present() {
     local path="$1" spec="$2"
     local out
@@ -100,7 +84,6 @@ stream_present() {
     [ -n "$out" ]
 }
 
-# --- Funzione: primo pts (minimo tra i primi N pacchetti, tollerante al riordino B-frame) ---
 get_first_pts() {
     local path="$1" spec="$2" count="$3"
     local out
@@ -110,7 +93,6 @@ get_first_pts() {
     echo "$out" | grep -E '^[0-9.]+$' | sort -g | head -n1
 }
 
-# --- Funzione: ultimo pts (seek vicino a EOF, con fallback se il file e' troppo corto) ---
 get_last_pts() {
     local path="$1" spec="$2" eofsec="$3"
     local out
@@ -126,7 +108,6 @@ get_last_pts() {
 
 echo "Ricerca file mp4 in corso in: $ABS_DIR..."
 
-# Popola l'array con i file trovati (gestisce spazi/caratteri speciali nei nomi)
 mapfile -d '' -t FILES < <(find "$ABS_DIR" -type f -iname "*.mp4" -print0)
 TOTAL=${#FILES[@]}
 
