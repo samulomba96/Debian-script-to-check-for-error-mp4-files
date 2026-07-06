@@ -95,4 +95,4 @@ column -t -s ';' report_video_linux.csv | less -S
 
 ## Licenza
 
-Nessuna licenza particolare — usa, modifica e condividi liberamente.
+Questo progetto è distribuito sotto licenza [MIT](LICENSE).
